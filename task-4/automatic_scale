@@ -1,0 +1,59 @@
+# AWS Launch Configuration is a template containing all instance settings to apply to each new launched by Auto Scaling Group instance.
+
+resource "aws_launch_configuration" "example" {
+    image_id = "ami-****" 
+    instance_type = "t2.micro"
+    key_name = "rr"
+
+    security_groups = [aws_security_group.<name>.id]
+    associate_public_ip_address = true
+
+    user_data = << any script need to run when instance will be laucnced >>
+    lifecycle {
+        create_before_destroy = true
+        # CREATE_BEFORE_DESTROY here to create new instances from a new launch configuration before destroying the old ones.
+    }
+}
+
+# launch autoscaling grp to define the instance how much min, max and desired are required
+resource "aws_autoscaling_group" "example" {
+    name = "${aws_launch_configuration.example.name}-asg"
+    min_size = 1
+    desired_capacity = 2
+    max_size = 4
+
+    health_check_type = "whatever health check you want to apply"
+    
+    launch_configuration = aws_launch_configuration.example.name
+    enabled_metrics = {
+        "GroupMinSize",
+        "GroupMaxSize",
+        "GroupDesiredCapacity",
+        "GroupInServiceInstances"
+    }
+
+    metrics_granularity = "1Minute"
+}
+
+# Autoscaling Policy to lauch instance when cloudwatch alaram is triggred with cpu utilisation > 60
+
+resource "aws_autoscaling_policy" "example" {
+    name = "example"
+    scaling_adjustments = 1
+    adjustment_type = "ChangeInCapacity"
+    cooldown = 300
+    autoscaling_group_name = aws_autoscaling_group.example.name
+}
+resource "aws_cloudwatch_metric_alarm" "example_alarm" {
+    alaram_name = "cpu_alarm"
+    comparison_operator = "GreaterThanOrEqualToThreshold"
+    metric_name = "CPUUtilization"
+    period = "120"
+    statistic = "Average"
+    thershold = "60"
+
+    dimensions = {
+        AutoScalingGroupName = aws_autoscaling_group.example.name
+    }
+    alarm_actions = [aws_autoscaling_policy.example.arn]
+}

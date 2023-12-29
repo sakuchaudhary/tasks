@@ -1,0 +1,18 @@
+to be honest I don't have expreinece in github as I have worked on gitlab
+I searched for the things how to make the changes and stuff like this and have given this yaml file for the actions that needs to be performed in order to build, test, deploy 
+
+this yaml file creates a pipeline for the deployment of the app 
+triggers with on event --> pipeline will be triggered when 
+  there is a push in branch dev, main, master 
+  from tag v2
+  there is a merge request
+
+env contains the variables to be used in the pipeline
+
+jobs contains all the jobs that will be run for the pipeline
+  build-jar: it build the jar file for java project using mvn command and export the artifacts in ./target folder
+  sonar-analysis: job depends on the build-jar and publish the sonar report on sonarqube
+  docker-pkg: it checkouts to v2 and uses the docker actions to build, publish the image
+  deploy-img: deploys the docker image built in the docker-pkg job
+  
+

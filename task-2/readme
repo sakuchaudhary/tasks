@@ -1,0 +1,15 @@
+this task is to deploy nginx deploymet 
+I tried to use best practises for this including rolling update strategy, probes, config maps , volume mounts, secretsRef 
+using hpa -- horizontal pod autoscaling to automaticaally scale up and down the pods
+deployiong the service 
+
+to deploy the manifests, must have kubectl install
+
+first apply the service file:
+  kubectl apply -f ./svc.yaml 
+
+apply the deployment file
+  kubectl apply -f ./deployment.yaml
+
+then apply the horizontal pod autoscaling
+  kubectl apply -f ./hpa.yaml

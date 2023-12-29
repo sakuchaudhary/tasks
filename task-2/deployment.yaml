@@ -1,0 +1,79 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nginx-deployment
+  namespace: default
+  labels:
+    app.kubernetes.io/name: nginx   # lables to be used for recognition
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nginx
+  strategy:
+    type: RollingUpdate      # no downtime with rollingupdate strategy
+    rollingUpdate:
+     maxSurge: 1
+     maxUnavailable: 0
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nginx
+        app.kubernetes.io/instance: nginx
+    spec:
+      containers:
+      - name: nginx               # deploy the container with the image nginx
+        image: nginx:latest
+        imagePullPolicy: Always
+        env:                        # env variables wihch is used later in authentication of probe
+        - name: Auth
+          valueFrom:
+            secretKeyRef:                     # getting value from secret
+              name: probeauthent-secret
+              key: probeAuthent
+        volumeMounts:                      # mount the volume- path
+        - name: application-config
+          mountPath: "/app/config"
+          readOnly: true
+        resources:                          # resources used to launch a pod
+          limits:
+            cpu: 1
+            memory: "2Gi"
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+        readinessProbe:                      # probe to check if the contaier is ready
+          exec:
+            command:
+              - curl
+              - '-H Authorization: $(Auth)'
+              - http://localhost:80
+          initialDelaySeconds: 30
+          periodSeconds: 5
+          timeoutSeconds: 5
+        livenessProbe:                           # probe to check if container is ready to take the requests
+          exec:
+            command:
+              - curl
+              - '-H Authorization: $(Auth)'
+              - http://localhost:80
+          initialDelaySeconds: 30
+          periodSeconds: 20
+          timeoutSeconds: 20
+      volumes:
+      - name: application-config
+        configMap:                               # other configurations set up for the container
+          name: nginx-cm
+          items:
+          - key: cm.yaml
+            path: cm.yaml
+      restartPolicy: Always
+      affinity: 
+        nodeAffinity:                                         # to schedule the pods on the nodes with specific key value pair
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: feature.node.kubernetes.io/kernel-version.full
+                    operator: In
+                    values:
+                      - <anyValue>

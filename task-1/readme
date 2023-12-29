@@ -1,0 +1,21 @@
+this task is to create an infra using terraform for aws console.
+in this I first started with creating provider file, variables, followed by modules and then security_groups, alb and production
+I tried to use the best practises for terraform.
+
+provider: This code adds AWS as a provider and sets the credentials
+variables: Create the set of variables that will be needed for our infra
+Network module: This step builds the Virtual Private Cloud (VPC) with
+  2 public subnets which can be accessed via the internet using the Internet Gateway.
+  2 private subnets which are not exposed to the internet and are private to the VPC.
+  Create a NAT Gateway in the public subnet and attach it to the private subnets using the route tables, so the private subnets can access the internet.
+Security Groups: Create two security groups.
+  for EC2 instances — Allows all inbound traffic on port 22 for SSH, allows all traffic only from the Application Load Balancer, and allows all outbound traffic.
+  for the Application Load Balancer (ALB) — Allows all inbound traffic on port 80 and allows all outbound traffic.
+Load Balancer: This step adds a Load Balancer, listeners, for the Load Balancer, adds Target Groups to route the traffic
+
+run terraform init command first to intitate the providers
+to Deploy the infra, 
+  run terraform plan command first to revirw the changes that will be applied 
+  then run terraform apply command to apply all the changes 
+  terraform apply --auto-approve --> to skip the confirmation
+  to destroy everything --> terraform destroy command
